@@ -32,5 +32,17 @@ async def process_start_command(message: Message):
              'Чтобы узнать правила, отправь команду /help'
     )
 
+
+@dp.message(Command(commands=['help']))
+async def process_help_command(message: Message):
+    await message.answer(
+        'Правила игры:\n\nЯ загадываю число от 1 до 100, '
+        f'а тебе нужно его угадать\nУ тебя есть {ATTEMPTS} '
+        'попыток\n\nДоступные команды:\n\n/help - правила '
+        'игры и список команд\n/cancel - выйти из игры\n'
+        '/stat - посмотреть статистику\n\nДавай сыграем?'
+    )
+
+
 if __name__ == '__main__':
     dp.run_polling(bot)
