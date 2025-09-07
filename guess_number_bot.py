@@ -1,4 +1,4 @@
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
 from aiogram.types import Message
 
@@ -56,14 +56,34 @@ async def process_stat_command(message: Message):
 async def process_cancel_command(message: Message):
     if user['in_game']:
         user['in_game'] = False
+        user['secret_number'] = None
+        user['attempts'] = 0
         await message.answer(
             'Игра окончена!\n'
-            'Захочешь сыграть снова - пиши ;)'
+            'Захочешь сыграть снова - пиши 😉'
         )
     else:
         await message.answer(
             'А мы с тобой и так не играем.\n'
             'Захочешь сыграть - пиши 😉'
+        )
+
+
+@dp.message(F.text.lower().in_(['да', 'давай', 'сыграем', 'игра', 'играть', 'хочу играть']))
+async def process_positive_answer(message: Message):
+    if not user['in_game']:
+        user['in_game'] = True
+        user['secret_number'] = get_random_number()
+        user['attempts'] = ATTEMPTS
+        await message.answer(
+            'Играем!\n\nЯ загадал число от 1 до 100, '
+            'попробуй угадать!'
+        )
+    else:
+        await message.answer(
+            'Пока мы играем в игру, я могу '
+            'реагировать только на числа от 1 до 100 '
+            'и команды /cancel и /stat'
         )
 
 
