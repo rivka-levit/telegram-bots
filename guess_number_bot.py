@@ -52,5 +52,20 @@ async def process_stat_command(message: Message):
     )
 
 
+@dp.message(Command(commands=['cancel']))
+async def process_cancel_command(message: Message):
+    if user['in_game']:
+        user['in_game'] = False
+        await message.answer(
+            'Игра окончена!\n'
+            'Захочешь сыграть снова - пиши ;)'
+        )
+    else:
+        await message.answer(
+            'А мы с тобой и так не играем.\n'
+            'Захочешь сыграть - пиши 😉'
+        )
+
+
 if __name__ == '__main__':
     dp.run_polling(bot)
