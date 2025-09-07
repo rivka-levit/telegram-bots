@@ -44,5 +44,13 @@ async def process_help_command(message: Message):
     )
 
 
+@dp.message(Command(commands=['stat']))
+async def process_stat_command(message: Message):
+    await message.answer(
+        f'Всего игр сыграно: {user["total_games"]}\n'
+        f'Игр выиграно: {user["wins"]}'
+    )
+
+
 if __name__ == '__main__':
     dp.run_polling(bot)
