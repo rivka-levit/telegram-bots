@@ -69,7 +69,9 @@ async def process_cancel_command(message: Message):
         )
 
 
-@dp.message(F.text.lower().in_(['да', 'давай', 'сыграем', 'игра', 'играть', 'хочу играть']))
+@dp.message(F.text.lower().in_([
+    'да', 'давай', 'сыграем', 'игра', 'играть', 'играем', 'хочу', 'хочу играть'
+]))
 async def process_positive_answer(message: Message):
     if not user['in_game']:
         user['in_game'] = True
@@ -84,6 +86,19 @@ async def process_positive_answer(message: Message):
             'Пока мы играем в игру, я могу '
             'реагировать только на числа от 1 до 100 '
             'и команды /cancel и /stat'
+        )
+
+
+@dp.message(F.text.lower().in_(['нет', 'не', 'не хочу', 'не буду']))
+async def process_negative_answer(message: Message):
+    if not user['in_game']:
+        await message.answer(
+            'Жаль 😔\nЗахочешь сыграть - пиши!'
+        )
+    else:
+        await message.answer(
+            'Мы же играем сейчас. Пиши число от 1 до 100!\n'
+            'Хочешь отменить игру? Пришли команду /cancel'
         )
 
 
