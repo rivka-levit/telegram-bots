@@ -1,5 +1,5 @@
 from aiogram import Bot, Dispatcher, F
-from aiogram.filters import Command
+from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
 
 from dotenv import load_dotenv
@@ -25,7 +25,7 @@ def get_random_number() -> int:
     return random.randint(1, 100)
 
 
-@dp.message(Command(commands=['start']))
+@dp.message(CommandStart())
 async def process_start_command(message: Message):
     await message.answer(
         text='Сыграем в игру "Угадай число"?\n'
@@ -70,7 +70,8 @@ async def process_cancel_command(message: Message):
 
 
 @dp.message(F.text.lower().in_([
-    'да', 'давай', 'сыграем', 'игра', 'играть', 'играем', 'хочу', 'хочу играть'
+    'да', 'давай', 'сыграем', 'игра', 'играть', 'играем', 'хочу',
+    'хочу играть', '/play', 'y', 'yes'
 ]))
 async def process_positive_answer(message: Message):
     if not user['in_game']:
@@ -89,7 +90,7 @@ async def process_positive_answer(message: Message):
         )
 
 
-@dp.message(F.text.lower().in_(['нет', 'не', 'не хочу', 'не буду']))
+@dp.message(F.text.lower().in_(['нет', 'не', 'не хочу', 'не буду', 'no']))
 async def process_negative_answer(message: Message):
     if not user['in_game']:
         await message.answer(
@@ -137,6 +138,20 @@ async def process_numbers_answer(message: Message):
             )
     else:
         await message.answer('Мы еще не играем. Хочешь сыграть?')
+
+
+@dp.message()
+async def process_other_message(message: Message):
+    if user['in_game']:
+        await message.answer(
+            'Мы же сейчас играем...\n'
+            'Присылай числа от 1 до 100, пожалуйста'
+        )
+    else:
+        await message.answer(
+            'Эй, я не знаю столько умных слов 😂 Я умею только играть 😉\n'
+            'Хочешь сыграть?'
+        )
 
 
 if __name__ == '__main__':
