@@ -12,7 +12,7 @@ load_dotenv()
 bot = Bot(token=os.environ.get('GUESS_NUMBER_TOKEN'))
 dp = Dispatcher()
 
-ATTEMPTS = 5
+ATTEMPTS = 7
 
 user = {'in_game': False,
         'secret_number': None,
@@ -100,6 +100,43 @@ async def process_negative_answer(message: Message):
             'Мы же играем сейчас. Пиши число от 1 до 100!\n'
             'Хочешь отменить игру? Пришли команду /cancel'
         )
+
+
+# Handler for numbers 1 to 100 sent by user
+@dp.message(lambda x: x.text and x.text.isdigit() and 1 <= int(x.text) <= 100)
+async def process_numbers_answer(message: Message):
+    if user['in_game']:
+        num = int(message.text)
+        if num == user['secret_number']:
+            user['in_game'] = False
+            user['secret_number'] = None
+            user['total_games'] += 1
+            user['wins'] += 1
+            await message.answer('Бинго! Число угадано! Сыграем еще?')
+        elif num > user['secret_number']:
+            user['attempts'] -= 1
+            await message.answer(
+                f'Мое число меньше.\n'
+                f'Осталось {user["attempts"]} попыток.'
+            )
+        elif num < user['secret_number']:
+            user['attempts'] -= 1
+            await message.answer(
+                f'Мое число больше.\n'
+                f'Осталось {user["attempts"]} попыток.'
+            )
+        if user['in_game'] and user['attempts'] == 0:
+            secret = user['secret_number']
+            user['in_game'] = False
+            user['secret_number'] = None
+            user['total_games'] += 1
+            await message.answer(
+                f'Упс... Игра окончена. Попыток больше нет.\n'
+                f'Моё число было {secret}\n'
+                f'Хочешь попробовать еще раз?'
+            )
+    else:
+        await message.answer('Мы еще не играем. Хочешь сыграть?')
 
 
 if __name__ == '__main__':
