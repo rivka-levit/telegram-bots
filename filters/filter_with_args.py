@@ -4,7 +4,7 @@ Filter to pass arguments to a handler
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import BaseFilter
-from aiogram.types import Message
+from aiogram.types import Message, PhotoSize
 
 BOT_TOKEN = 'BOT_TOKEN'
 bot = Bot(token=BOT_TOKEN)
@@ -38,6 +38,13 @@ async def process_if_numbers(message: Message, numbers: list[int]):
 @dp.message(F.text.lower().startswith('найди числа'))
 async def process_if_not_numbers(message: Message):
     await message.answer(text='Не нашел что-то :(')
+
+
+# ------- Pass arguments with magic filters ----------------
+
+@dp.message(F.photo[0].as_('photo_min'))
+async def process_photo_send(message: Message, photo_min: PhotoSize):
+    print(photo_min)
 
 
 if __name__ == '__main__':
