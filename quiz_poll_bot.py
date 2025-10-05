@@ -57,9 +57,41 @@ async def process_start(message: Message):
         reply_markup=keyboard
     )
 
-@dp.message(F.poll)
-async def process_poll(message: Message):
-    print(message.model_dump_json(indent=4, exclude_none=True))
+
+@dp.message(F.poll.type == PollType.QUIZ)
+async def process_poll_quiz(message: Message):
+    await message.answer_poll(
+        question=message.poll.question,
+        options=[opt.text for opt in message.poll.options],
+        is_anonymous=False,
+        type=message.poll.type,
+        correct_option_id=message.poll.correct_option_id,
+        explanationf=message.poll.explanation,
+        explanation_entities=message.poll.explanation_entities,
+        message_effect_id='5104841245755180586'
+    )
+
+
+@dp.message(F.poll.type == PollType.REGULAR)
+async def process_poll_regular(message: Message):
+    await message.answer_poll(
+        question=message.poll.question,
+        options=[opt.text for opt in message.poll.options],
+        is_anonymous=False,
+        type=message.poll.type,
+        allows_multiple_answers=message.poll.allows_multiple_answers,
+        message_effect_id='5107584321108051014'
+    )
+
+
+@dp.poll_answer()
+async def process_answer_poll(poll_answer: PollAnswer):
+    print(poll_answer.model_dump_json(indent=2, exclude_none=True))
+
+
+# @dp.message(F.poll)
+# async def process_poll(message: Message):
+#     print(message.model_dump_json(indent=4, exclude_none=True))
 
 
 if __name__ == '__main__':
