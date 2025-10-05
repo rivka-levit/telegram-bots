@@ -1,3 +1,6 @@
+import logging
+import sys
+
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart
 from aiogram.types import (
@@ -7,9 +10,23 @@ from aiogram.types import (
 )
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
+from environs import Env
 
-BOT_TOKEN = 'BOT TOKEN HERE'
+env = Env()
+env.read_env()
 
+logger = logging.getLogger(__name__)
+
+logging.basicConfig(
+    level=logging.INFO,
+    stream=sys.stdout,
+    format='%(levelname)-8s [%(asctime)s] - %(filename)s:%(lineno)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+
+BOT_TOKEN = env('TEST_BOT_TOKEN')
+
+logger.info('Test bot starting...')
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
@@ -25,7 +42,7 @@ geo_btn = KeyboardButton(
 kb_builder.row(contact_btn, geo_btn, width=1)
 
 # Create keyboard object
-keyboard: ReplyKeyboardMarkup = kb_builder.as_markup(request_keyboard=True)
+keyboard: ReplyKeyboardMarkup = kb_builder.as_markup(resize_keyboard=True)
 
 
 # Command /start handler
