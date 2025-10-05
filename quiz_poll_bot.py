@@ -5,6 +5,7 @@ from aiogram.types import (
     KeyboardButton,
     KeyboardButtonPollType,
     Message,
+    PollAnswer,
     ReplyKeyboardMarkup
 )
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
@@ -26,7 +27,7 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 
-bot = Bot(token=env('TELEGRAM_BOT_TOKEN'))
+bot = Bot(token=env('TEST_BOT_TOKEN'))
 dp = Dispatcher()
 
 # Create buttons
@@ -48,3 +49,18 @@ kb_builder = ReplyKeyboardBuilder()
 kb_builder.row(poll_quiz_btn, poll_btn, quiz_btn, width=1)
 keyboard: ReplyKeyboardMarkup = kb_builder.as_markup(resize_keyboard=True)
 
+
+@dp.message(CommandStart())
+async def process_start(message: Message):
+    await message.answer(
+        text="Let's experiment with special buttons",
+        reply_markup=keyboard
+    )
+
+@dp.message(F.poll)
+async def process_poll(message: Message):
+    print(message.model_dump_json(indent=4, exclude_none=True))
+
+
+if __name__ == '__main__':
+    dp.run_polling(bot)
