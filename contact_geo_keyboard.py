@@ -1,5 +1,3 @@
-import os
-
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart
 from aiogram.types import (
@@ -27,7 +25,16 @@ geo_btn = KeyboardButton(
 kb_builder.row(contact_btn, geo_btn, width=1)
 
 # Create keyboard object
-keyword: ReplyKeyboardMarkup = kb_builder.as_markup(request_keyboard=True)
+keyboard: ReplyKeyboardMarkup = kb_builder.as_markup(request_keyboard=True)
+
+
+# Command /start handler
+@dp.message(CommandStart())
+async def process_command_start(message: Message):
+    await message.answer(
+        text='Special buttons experiment',
+        reply_markup=keyboard
+    )
 
 
 # Contact sent handler
