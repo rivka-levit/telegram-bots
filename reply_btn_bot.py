@@ -3,11 +3,15 @@ from aiogram.filters import CommandStart
 from aiogram.types import (
     KeyboardButton,
     Message,
-    ReplyKeyboardMarkup,
-    ReplyKeyboardRemove
+    ReplyKeyboardMarkup
 )
 
-BOT_TOKEN = 'BOT TOKEN HERE'
+from environs import Env
+
+env = Env()
+env.read_env()
+
+BOT_TOKEN = env('TEST_BOT_TOKEN')
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
@@ -20,7 +24,8 @@ btn_2 = KeyboardButton(text='Огурцов 🥒')
 keyboard = ReplyKeyboardMarkup(
     keyboard=[[btn_1, btn_2]],
     resize_keyboard=True,
-    one_time_keyboard=True  # collapse keyboard
+    one_time_keyboard=True,  # collapse keyboard
+    input_field_placeholder='Нажмите кнопку с ответом'
 )
 
 
