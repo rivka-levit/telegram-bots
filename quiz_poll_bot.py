@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(
     level=logging.INFO,
     stream=sys.stdout,
-    format='%(levelname)-8s [%(asctime)s] - %(filename)s:%(lineno)s - %(message)s',
+    format='#%(levelname)-8s [%(asctime)s] - %(filename)s:%(lineno)s - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 
