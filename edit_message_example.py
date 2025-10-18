@@ -57,8 +57,12 @@ async def process_more_press(callback: CallbackQuery):
     ]
     markup = InlineKeyboardMarkup(inline_keyboard=keyboard)
 
+    joke_text = jokes[random_joke()]
+    while callback.message.text == joke_text:
+        joke_text = jokes[random_joke()]
+
     await callback.message.edit_text(
-        text=jokes[random_joke()],
+        text=joke_text,
         reply_markup=markup
     )
 
