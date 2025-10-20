@@ -1,8 +1,13 @@
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+    Message
+)
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from environs import Env
@@ -43,21 +48,40 @@ def get_change_keyboard(
 
 
 def get_exchange_message(
-        base_sum: str = '-----',
-        target_sum: str = '-----'
+        base_sum: int | float = 0,
+        target_sum: int | float = 0
 ) -> str:
     """Get text message for main exchange window."""
 
-    text = f'<b>Currency Exchange</b>\n\n{base_sum}    ➡️    {target_sum}\n\n '
+    text = (f'<b><u>Currency Exchange</u></b>\n\n\n'
+            f'<b>{base_sum:.2f}</b>    ➡️    <b>{target_sum:.2f}</b>\n\n\n'
+            f'Enter your sum to convert ⬇\n\n')
 
     return text
 
 
 @dp.message(CommandStart())
 async def start_command(message: Message):
+    user_id = message.from_user.id
+    if user_id not in USERS:
+        USERS[user_id] = {'base_cur': 'USD', 'target_cur': 'ILS'}
+
     await message.answer(
         text=get_exchange_message(),
-        reply_markup=get_change_keyboard()
+        reply_markup=get_change_keyboard(USERS[user_id]['base_cur'], USERS[user_id]['target_cur'])
+    )
+
+
+@dp.callback_query(F.data == 'reverse')
+async def reverse_currencies(callback: CallbackQuery):
+    # print(callback.model_dump_json(indent=2, exclude_none=True))
+    user_id = callback.from_user.id
+    USERS[user_id]['base_cur'], USERS[user_id]['target_cur'] = USERS[user_id]['target_cur'], USERS[user_id]['base_cur']
+    await callback.message.edit_reply_markup(
+        reply_markup=get_change_keyboard(
+            base_cur=USERS[user_id]['base_cur'],
+            target_cur=USERS[user_id]['target_cur']
+        )
     )
 
 
