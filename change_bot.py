@@ -53,7 +53,7 @@ def get_exchange_message(
 ) -> str:
     """Get text message for main exchange window."""
 
-    text = (f'<b><u>Currency Exchange</u></b>\n\n\n'
+    text = (f'<b>=== <u>Currency Exchange</u> ===</b>\n\n\n'
             f'<b>{base_sum:.2f}</b>    ➡️    <b>{target_sum:.2f}</b>\n\n\n'
             f'Enter your sum to convert ⬇\n\n')
 
