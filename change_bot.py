@@ -87,7 +87,6 @@ async def start_command(message: Message):
 
 @dp.callback_query(F.data == 'reverse')
 async def reverse_currencies(callback: CallbackQuery):
-    # print(callback.model_dump_json(indent=2, exclude_none=True))
     user_id = callback.from_user.id
     USERS[user_id]['base_cur'], USERS[user_id]['target_cur'] = USERS[user_id]['target_cur'], USERS[user_id]['base_cur']
     await callback.message.edit_reply_markup(
@@ -95,6 +94,21 @@ async def reverse_currencies(callback: CallbackQuery):
             base_cur=USERS[user_id]['base_cur'],
             target_cur=USERS[user_id]['target_cur']
         )
+    )
+
+
+@dp.message(lambda x: x.text.isdigit())
+async def number_sent(message: Message):
+    user_id = message.from_user.id
+    base_cur = USERS[user_id]['base_cur']
+    target_cur = USERS[user_id]['target_cur']
+    amount = float(message.text)
+
+    result = convert_amount(base_cur, target_cur, amount)
+
+    await message.answer(
+        text = get_exchange_message(amount, result),
+        reply_markup=get_change_keyboard(base_cur, target_cur)
     )
 
 
