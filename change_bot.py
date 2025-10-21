@@ -1,3 +1,5 @@
+import requests
+
 from aiogram import Bot, Dispatcher, F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
@@ -22,6 +24,17 @@ bot = Bot(
     default=DefaultBotProperties(parse_mode=ParseMode.HTML)
 )
 dp = Dispatcher()
+
+
+def convert_amount(base_cur: str, target_cur: str, amount: int | float) -> float:
+    api_key = env.str('RATE_API_KEY')
+    base_url = f'https://v6.exchangerate-api.com/v6/{api_key}/pair'
+
+    r = requests.get(f'{base_url}/{base_cur}/{target_cur}/{amount}')
+    data = r.json()
+
+    return float(data['conversion_result'])
+
 
 
 def get_change_keyboard(
