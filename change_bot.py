@@ -17,7 +17,16 @@ from environs import Env
 env = Env()
 env.read_env()
 
+
+def get_supported_currencies() -> list[list[str]]:
+    api_key = env.str('RATE_API_KEY')
+    url = f'https://v6.exchangerate-api.com/v6/{api_key}/codes'
+    r = requests.get(url)
+    return r.json()['supported_codes']
+
+
 USERS = dict()
+CURRENCIES = get_supported_currencies()
 
 bot = Bot(
     token=env.str('TEST_BOT_TOKEN'),
@@ -27,6 +36,8 @@ dp = Dispatcher()
 
 
 def convert_amount(base_cur: str, target_cur: str, amount: int | float) -> float:
+    """Converts amount from base currency to target currency."""
+
     api_key = env.str('RATE_API_KEY')
     base_url = f'https://v6.exchangerate-api.com/v6/{api_key}/pair'
 
@@ -36,8 +47,7 @@ def convert_amount(base_cur: str, target_cur: str, amount: int | float) -> float
     return float(data['conversion_result'])
 
 
-
-def get_change_keyboard(
+def exchange_keyboard(
         base_cur: str = 'USD',
         target_cur: str = 'ILS'
 ) -> InlineKeyboardMarkup:
@@ -56,6 +66,22 @@ def get_change_keyboard(
 
     builder = InlineKeyboardBuilder()
     builder.row(base_btn, change_btn, target_btn, width=3)
+
+    return builder.as_markup()
+
+
+def currencies_choice_keyboard() -> InlineKeyboardMarkup:
+    codes_buttons = list()
+
+    for code, name in CURRENCIES:
+        currency_btn = InlineKeyboardButton(
+            text=code,
+            callback_data=code
+        )
+        codes_buttons.append(currency_btn)
+
+    builder = InlineKeyboardBuilder()
+    builder.row(*codes_buttons, width=5)
 
     return builder.as_markup()
 
@@ -79,9 +105,14 @@ async def start_command(message: Message):
     if user_id not in USERS:
         USERS[user_id] = {'base_cur': 'USD', 'target_cur': 'ILS'}
 
+    keyboard = exchange_keyboard(
+        base_cur=USERS[user_id]['base_cur'],
+        target_cur=USERS[user_id]['target_cur']
+    )
+
     await message.answer(
         text=get_exchange_message(),
-        reply_markup=get_change_keyboard(USERS[user_id]['base_cur'], USERS[user_id]['target_cur'])
+        reply_markup=keyboard
     )
 
 
@@ -90,7 +121,7 @@ async def reverse_currencies(callback: CallbackQuery):
     user_id = callback.from_user.id
     USERS[user_id]['base_cur'], USERS[user_id]['target_cur'] = USERS[user_id]['target_cur'], USERS[user_id]['base_cur']
     await callback.message.edit_reply_markup(
-        reply_markup=get_change_keyboard(
+        reply_markup=exchange_keyboard(
             base_cur=USERS[user_id]['base_cur'],
             target_cur=USERS[user_id]['target_cur']
         )
@@ -108,7 +139,7 @@ async def number_sent(message: Message):
 
     await message.answer(
         text = get_exchange_message(amount, result),
-        reply_markup=get_change_keyboard(base_cur, target_cur)
+        reply_markup=exchange_keyboard(base_cur, target_cur)
     )
 
 
