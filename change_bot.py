@@ -4,6 +4,7 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
+from aiogram.filters.callback_data import CallbackData
 from aiogram.types import (
     CallbackQuery,
     InlineKeyboardMarkup,
@@ -18,15 +19,70 @@ env = Env()
 env.read_env()
 
 
-def get_supported_currencies() -> list[list[str]]:
-    api_key = env.str('RATE_API_KEY')
-    url = f'https://v6.exchangerate-api.com/v6/{api_key}/codes'
-    r = requests.get(url)
-    return r.json()['supported_codes']
+# def get_supported_currencies() -> list[list[str]]:
+#     api_key = env.str('RATE_API_KEY')
+#     url = f'https://v6.exchangerate-api.com/v6/{api_key}/codes'
+#     r = requests.get(url)
+#     return r.json()['supported_codes']
 
 
 USERS = dict()
-CURRENCIES = get_supported_currencies()
+CURRENCIES = {
+    'AED': 'United Arab Emirates Dirham',
+    'ARS': 'Argentine Peso',
+    'AUD': 'Australian Dollar',
+    'BWP': 'Botswanan Pula',
+    'BGN': 'Bulgarian Lev',
+    'BHD': 'Bahraini Dinar',
+    'BND': 'Brunei Dollar',
+    'BRL': 'Brazilian Real',
+    'CAD': 'Canadian Dollar',
+    'CHF': 'Swiss Franc',
+    'CLP': 'Chilean Peso',
+    'CNY': 'Chinese Yuan',
+    'COP': 'Colombian Peso',
+    'CZK': 'Czech Republic Koruna',
+    'DKK': 'Danish Krone',
+    'EUR': 'Euro',
+    'GBP': 'British Pound Sterling',
+    'HKD': 'Hong Kong Dollar',
+    'HRK': 'Croatian Kuna',
+    'HUF': 'Hungarian Forint',
+    'IDR': 'Indonesian Rupiah',
+    'ILS': 'Israeli New Sheqel',
+    'INR': 'Indian Rupee',
+    'IRR': 'Iranian Rial',
+    'ISK': 'Icelandic Krona',
+    'JPY': 'Japanese Yen',
+    'KRW': 'South Korean Won',
+    'KWD': 'Kuwaiti Dinar',
+    'KZT': 'Kazakhstani Tenge',
+    'LKR': 'Sri Lankan Rupee',
+    'LYD': 'Libyan Dinar',
+    'MUR': 'Mauritian Rupee',
+    'MXN': 'Mexican Peso',
+    'MYR': 'Malaysian Ringgit',
+    'NOK': 'Norwegian Krone',
+    'NPR': 'Nepalese Rupee',
+    'NZD': 'New Zealand Dollar',
+    'OMR': 'Omani Rial',
+    'PHP': 'Philippine Peso',
+    'PKR': 'Pakistani Rupee',
+    'PLN': 'Polish Zloty',
+    'QAR': 'Qatari Rial',
+    'RON': 'Romanian Leu',
+    'RUB': 'Russian Ruble',
+    'SAR': 'Saudi Riyal',
+    'SEK': 'Swedish Krona',
+    'SGD': 'Singapore Dollar',
+    'THB': 'Thai Baht',
+    'TRY': 'Turkish Lira',
+    'TTD': 'Trinidad and Tobago Dollar',
+    'TWD': 'New Taiwan Dollar',
+    'USD': 'United States Dollar',
+    'VEF': 'Venezuelan Bolivar Fuerte',
+    'ZAR': 'South African Rand'
+}
 
 bot = Bot(
     token=env.str('TEST_BOT_TOKEN'),
@@ -45,6 +101,18 @@ def convert_amount(base_cur: str, target_cur: str, amount: int | float) -> float
     data = r.json()
 
     return float(data['conversion_result'])
+
+
+class BaseCurrencyCallbackFactory(CallbackData, prefix='source'):
+    """Base currency callback factory."""
+
+    code: str
+
+
+class TargetCurrencyCallbackFactory(CallbackData, prefix='target'):
+    """Target currency callback factory."""
+
+    code: str
 
 
 def exchange_keyboard(
@@ -70,18 +138,34 @@ def exchange_keyboard(
     return builder.as_markup()
 
 
-def currencies_choice_keyboard() -> InlineKeyboardMarkup:
+def base_currencies_choice_keyboard() -> InlineKeyboardMarkup:
     codes_buttons = list()
 
-    for code, name in CURRENCIES:
+    for code, name in CURRENCIES.items():
         currency_btn = InlineKeyboardButton(
             text=code,
-            callback_data=code
+            callback_data=BaseCurrencyCallbackFactory(code=code).pack()
         )
         codes_buttons.append(currency_btn)
 
     builder = InlineKeyboardBuilder()
-    builder.row(*codes_buttons, width=5)
+    builder.row(*codes_buttons, width=8)
+
+    return builder.as_markup()
+
+
+def target_currencies_choice_keyboard() -> InlineKeyboardMarkup:
+    codes_buttons = list()
+
+    for code, name in CURRENCIES.items():
+        currency_btn = InlineKeyboardButton(
+            text=code,
+            callback_data=TargetCurrencyCallbackFactory(code=code).pack()
+        )
+        codes_buttons.append(currency_btn)
+
+    builder = InlineKeyboardBuilder()
+    builder.row(*codes_buttons, width=8)
 
     return builder.as_markup()
 
@@ -99,6 +183,8 @@ def get_exchange_message(
     return text
 
 
+# ---------------------- Handlers ---------------------------
+
 @dp.message(CommandStart())
 async def start_command(message: Message):
     user_id = message.from_user.id
@@ -112,6 +198,26 @@ async def start_command(message: Message):
 
     await message.answer(
         text=get_exchange_message(),
+        reply_markup=keyboard
+    )
+
+
+@dp.callback_query(F.data=='choose_base_cur')
+async def choose_base_cur(callback: CallbackQuery):
+    keyboard = base_currencies_choice_keyboard()
+    text = 'Choose your base currency.'
+    await callback.message.edit_text(
+        text=text,
+        reply_markup=keyboard
+    )
+
+
+@dp.callback_query(F.data=='choose_target_cur')
+async def choose_base_cur(callback: CallbackQuery):
+    keyboard = target_currencies_choice_keyboard()
+    text = 'Choose your target currency.'
+    await callback.message.edit_text(
+        text=text,
         reply_markup=keyboard
     )
 
