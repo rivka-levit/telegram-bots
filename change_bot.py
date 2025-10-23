@@ -234,6 +234,40 @@ async def reverse_currencies(callback: CallbackQuery):
     )
 
 
+@dp.callback_query(BaseCurrencyCallbackFactory.filter())
+async def process_base_currency_choice(
+        callback: CallbackQuery,
+        callback_data: BaseCurrencyCallbackFactory
+):
+    user_id = callback.from_user.id
+    USERS[user_id]['base_cur'] = callback_data.code
+
+    await callback.message.edit_text(
+        text=get_exchange_message(),
+        reply_markup=exchange_keyboard(
+            base_cur=USERS[user_id]['base_cur'],
+            target_cur=USERS[user_id]['target_cur']
+        )
+    )
+
+
+@dp.callback_query(TargetCurrencyCallbackFactory.filter())
+async def process_target_currency_choice(
+        callback: CallbackQuery,
+        callback_data: TargetCurrencyCallbackFactory
+):
+    user_id = callback.from_user.id
+    USERS[user_id]['target_cur'] = callback_data.code
+
+    await callback.message.edit_text(
+        text=get_exchange_message(),
+        reply_markup=exchange_keyboard(
+            base_cur=USERS[user_id]['base_cur'],
+            target_cur=USERS[user_id]['target_cur']
+        )
+    )
+
+
 @dp.message(lambda x: x.text.isdigit())
 async def number_sent(message: Message):
     user_id = message.from_user.id
