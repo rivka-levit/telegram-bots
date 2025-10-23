@@ -1,3 +1,6 @@
+import logging
+import sys
+
 import requests
 
 from aiogram import Bot, Dispatcher, F
@@ -18,7 +21,12 @@ from environs import Env
 env = Env()
 env.read_env()
 
-
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)-8s - %(filename)s:%(lineno)d - %(message)s",
+    stream=sys.stdout,
+)
 # def get_supported_currencies() -> list[list[str]]:
 #     api_key = env.str('RATE_API_KEY')
 #     url = f'https://v6.exchangerate-api.com/v6/{api_key}/codes'
@@ -115,10 +123,7 @@ class TargetCurrencyCallbackFactory(CallbackData, prefix='target'):
     code: str
 
 
-def exchange_keyboard(
-        base_cur: str = 'USD',
-        target_cur: str = 'ILS'
-) -> InlineKeyboardMarkup:
+def exchange_keyboard(base_cur: str, target_cur: str) -> InlineKeyboardMarkup:
     change_btn = InlineKeyboardButton(
         text='🔄',
         callback_data='reverse'
@@ -149,7 +154,7 @@ def base_currencies_choice_keyboard() -> InlineKeyboardMarkup:
         codes_buttons.append(currency_btn)
 
     builder = InlineKeyboardBuilder()
-    builder.row(*codes_buttons, width=8)
+    builder.row(*codes_buttons, width=5)
 
     return builder.as_markup()
 
@@ -165,20 +170,20 @@ def target_currencies_choice_keyboard() -> InlineKeyboardMarkup:
         codes_buttons.append(currency_btn)
 
     builder = InlineKeyboardBuilder()
-    builder.row(*codes_buttons, width=8)
+    builder.row(*codes_buttons, width=5)
 
     return builder.as_markup()
 
 
 def get_exchange_message(
-        base_sum: int | float = 0,
-        target_sum: int | float = 0
+        base_sum: int | float,
+        target_sum: int | float,
+        user_id: str | int
 ) -> str:
     """Get text message for main exchange window."""
 
-    text = (f'<b>=== <u>Currency Exchange</u> ===</b>\n\n\n'
-            f'<b>{base_sum:.2f}</b>    ➡️    <b>{target_sum:.2f}</b>\n\n\n'
-            f'Enter your sum to convert ⬇\n\n')
+    text = (f'{USERS[user_id]['base_cur']}  <b>{base_sum:,.2f}</b>    ➡️    '
+            f'{USERS[user_id]['target_cur']}  <b>{target_sum:,.2f}</b>\n\n\n'.replace(',', ' '))
 
     return text
 
@@ -197,9 +202,9 @@ async def start_command(message: Message):
     )
 
     await message.answer(
-        text=get_exchange_message(),
-        reply_markup=keyboard
-    )
+                text=get_exchange_message(0, 0, user_id=user_id),
+                reply_markup=keyboard
+            )
 
 
 @dp.callback_query(F.data=='choose_base_cur')
@@ -243,7 +248,7 @@ async def process_base_currency_choice(
     USERS[user_id]['base_cur'] = callback_data.code
 
     await callback.message.edit_text(
-        text=get_exchange_message(),
+        text=get_exchange_message(0, 0, user_id=user_id),
         reply_markup=exchange_keyboard(
             base_cur=USERS[user_id]['base_cur'],
             target_cur=USERS[user_id]['target_cur']
@@ -260,7 +265,7 @@ async def process_target_currency_choice(
     USERS[user_id]['target_cur'] = callback_data.code
 
     await callback.message.edit_text(
-        text=get_exchange_message(),
+        text=get_exchange_message(0, 0, user_id=user_id),
         reply_markup=exchange_keyboard(
             base_cur=USERS[user_id]['base_cur'],
             target_cur=USERS[user_id]['target_cur']
@@ -278,7 +283,7 @@ async def number_sent(message: Message):
     result = convert_amount(base_cur, target_cur, amount)
 
     await message.answer(
-        text = get_exchange_message(amount, result),
+        text=get_exchange_message(amount, result, user_id=user_id),
         reply_markup=exchange_keyboard(base_cur, target_cur)
     )
 
