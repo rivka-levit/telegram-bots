@@ -1,10 +1,16 @@
-from aiogram import Bot, Dispatcher, F
+import logging
+from typing import Any, Awaitable, Callable, Dict
+
+from aiogram import Bot, BaseMiddleware, Dispatcher, F
 from aiogram.filters import Command, CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state, State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import (CallbackQuery, InlineKeyboardButton,
-                           InlineKeyboardMarkup, Message, PhotoSize)
+                           InlineKeyboardMarkup, Message, PhotoSize,
+                           TelegramObject)
+
+logger = logging.getLogger(__name__)
 
 # Вместо BOT TOKEN HERE нужно вставить токен вашего бота,
 # полученный у @BotFather
@@ -32,6 +38,24 @@ class FSMFillForm(StatesGroup):
     upload_photo = State()     # Состояние ожидания загрузки фото
     fill_education = State()   # Состояние ожидания выбора образования
     fill_wish_news = State()   # Состояние ожидания выбора получать ли новости
+
+
+# Так можно получить объект `state` в миддлварях
+class SomeMiddleware(BaseMiddleware):
+    async def __call__(
+            self,
+            handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
+            event: TelegramObject,
+            data: Dict[str, Any]
+    ) -> Any:
+        state: FSMContext = data.get('state')
+        user_state = await state.get_state()
+        user_data = await state.get_data()
+
+        logger.debug('User state is %s, user data is %s', user_state, user_data)
+
+        return await handler(event, data)
+
 
 
 # Этот хэндлер будет срабатывать на команду /start вне состояний
