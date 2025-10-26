@@ -1,11 +1,14 @@
 import logging
 from typing import Any, Awaitable, Callable, Dict
 
+from redis.asyncio import Redis
+
 from aiogram import Bot, BaseMiddleware, Dispatcher, F
 from aiogram.filters import Command, CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state, State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.types import (CallbackQuery, InlineKeyboardButton,
                            InlineKeyboardMarkup, Message, PhotoSize,
                            TelegramObject)
@@ -16,8 +19,11 @@ logger = logging.getLogger(__name__)
 # полученный у @BotFather
 BOT_TOKEN = 'BOT TOKEN HERE'
 
+redis = Redis(host='localhost', port=6379)
+
 # Инициализируем хранилище (создаем экземпляр класса MemoryStorage)
-storage = MemoryStorage()
+# storage = MemoryStorage()
+storage = RedisStorage(redis)
 
 # Создаем объекты бота и диспетчера
 bot = Bot(BOT_TOKEN)
